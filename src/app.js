@@ -1,19 +1,35 @@
 /**
- * ЭТАП 2 — Стилизация, валидация и состояния UI
+ * Auth Interface — ЭТАП 1–3
+ * 
+ * ЭТАП 1: Статический интерфейс
+ * ЭТАП 2: Валидация форм и UI-состояния
+ * ЭТАП 3: API-интеграция и финальная стабилизация
  * 
  * Этот модуль реализует:
  * - Клиентскую валидацию форм
  * - Отображение ошибок
  * - UI-состояния (idle / loading / error / success)
- * - Блокировку кнопок при loading
- * - Очистку полей после успеха
+ * - API-интеграцию (login и register endpoints)
+ * - Обработку серверных ошибок
+ * - Маппинг серверных ошибок в UI
  * 
  * ЗАПРЕЩЕНО:
- * - API-запросы
  * - навигация / редиректы
  * - управление сессией
- * - побочные эффекты за пределами UI
+ * - добавление новой функциональности
  */
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+/** API endpoints (configurable) */
+const API_CONFIG = {
+  baseURL: '/api',
+  loginEndpoint: '/api/login',
+  registerEndpoint: '/api/register',
+  timeout: 30000 // 30 seconds
+};
 
 // ============================================================================
 // SELECTORS
@@ -169,6 +185,115 @@ function validateTerms(checked) {
 }
 
 // ============================================================================
+// API FUNCTIONS
+// ============================================================================
+
+/**
+ * Make API request with timeout
+ */
+async function apiRequest(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    // Parse response body
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (e) {
+      // Response was not JSON
+      data = null;
+    }
+    
+    return {
+      status: response.status,
+      ok: response.ok,
+      data
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Submit login form to API
+ */
+async function submitLogin(email, password) {
+  const payload = { email, password };
+  
+  const result = await apiRequest(API_CONFIG.loginEndpoint, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  
+  return result;
+}
+
+/**
+ * Submit register form to API
+ */
+async function submitRegister(formData) {
+  const result = await apiRequest(API_CONFIG.registerEndpoint, {
+    method: 'POST',
+    body: JSON.stringify(formData)
+  });
+  
+  return result;
+}
+
+/**
+ * Handle API response and return errors if any
+ * Server error format expected:
+ * - { errors: { field: "message", ... } } for field errors
+ * - { message: "error" } for general error
+ * - { message: "success" } for success message
+ */
+function parseAPIError(response) {
+  const errors = {};
+  
+  if (!response.ok && response.data) {
+    // Server returned error response
+    if (response.data.errors && typeof response.data.errors === 'object') {
+      // Field-level errors
+      Object.assign(errors, response.data.errors);
+      return {
+        fieldErrors: errors,
+        generalError: null
+      };
+    } else if (response.data.message) {
+      // General error message
+      return {
+        fieldErrors: {},
+        generalError: response.data.message
+      };
+    }
+  }
+  
+  // Generic error
+  return {
+    fieldErrors: {},
+    generalError: 'An unexpected error occurred. Please try again.'
+  };
+}
+
+// ============================================================================
 // UI STATE MANAGEMENT
 // ============================================================================
 
@@ -309,7 +434,7 @@ function validateLoginForm() {
 /**
  * Handle login form submit
  */
-function handleLoginSubmit(e) {
+async function handleLoginSubmit(e) {
   e.preventDefault();
   
   if (!validateLoginForm()) {
@@ -318,26 +443,65 @@ function handleLoginSubmit(e) {
     return;
   }
   
-  // Simulate API call (no actual request sent)
   setUIState('loading');
   displayStatusMessage(loginForm, 'Signing in...', 'loading');
   setButtonsDisabled(loginForm, true);
   
-  // Simulate async operation
-  setTimeout(() => {
-    setUIState('success');
-    displayStatusMessage(loginForm, 'Successfully signed in!', 'success');
+  try {
+    const email = loginForm.querySelector('[name="email"]').value;
+    const password = loginForm.querySelector('[name="password"]').value;
     
-    // Clear form after success
-    setTimeout(() => {
-      clearFormErrors(loginForm);
-      clearStatusMessage(loginForm);
-      loginForm.reset();
-      setUIState('idle');
-    }, 1500);
+    const response = await submitLogin(email, password);
     
+    if (response.ok) {
+      // Success
+      setUIState('success');
+      displayStatusMessage(
+        loginForm,
+        response.data?.message || 'Successfully signed in!',
+        'success'
+      );
+      
+      // Clear form after success
+      setTimeout(() => {
+        clearFormErrors(loginForm);
+        clearStatusMessage(loginForm);
+        loginForm.reset();
+        setUIState('idle');
+        setButtonsDisabled(loginForm, false);
+      }, 1500);
+    } else {
+      // Error response from server
+      const { fieldErrors, generalError } = parseAPIError(response);
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        // Display field errors
+        clearFormErrors(loginForm);
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          displayFieldError(loginForm, field, message);
+        });
+        setUIState('error');
+        displayStatusMessage(loginForm, 'Please check the errors above', 'error');
+      } else if (generalError) {
+        // Display general error
+        setUIState('error');
+        displayStatusMessage(loginForm, generalError, 'error');
+      } else {
+        setUIState('error');
+        displayStatusMessage(loginForm, 'Sign in failed. Please try again.', 'error');
+      }
+      
+      setButtonsDisabled(loginForm, false);
+    }
+  } catch (error) {
+    // Network or other error
+    setUIState('error');
+    const errorMessage = error.message === 'Request timeout'
+      ? 'Request timed out. Please check your connection and try again.'
+      : 'Network error. Please check your connection and try again.';
+    displayStatusMessage(loginForm, errorMessage, 'error');
     setButtonsDisabled(loginForm, false);
-  }, 1500);
+  }
 }
 
 // ============================================================================
@@ -424,7 +588,7 @@ function validateRegisterForm() {
 /**
  * Handle register form submit
  */
-function handleRegisterSubmit(e) {
+async function handleRegisterSubmit(e) {
   e.preventDefault();
   
   if (!validateRegisterForm()) {
@@ -433,26 +597,71 @@ function handleRegisterSubmit(e) {
     return;
   }
   
-  // Simulate API call (no actual request sent)
   setUIState('loading');
   displayStatusMessage(registerForm, 'Creating account...', 'loading');
   setButtonsDisabled(registerForm, true);
   
-  // Simulate async operation
-  setTimeout(() => {
-    setUIState('success');
-    displayStatusMessage(registerForm, 'Account created successfully!', 'success');
+  try {
+    const fullName = registerForm.querySelector('[name="fullName"]').value;
+    const email = registerForm.querySelector('[name="email"]').value;
+    const phone = registerForm.querySelector('[name="phone"]').value;
+    const dob = registerForm.querySelector('[name="dob"]').value;
+    const gender = registerForm.querySelector('[name="gender"]').value;
+    const password = registerForm.querySelector('[name="password"]').value;
     
-    // Clear form after success
-    setTimeout(() => {
-      clearFormErrors(registerForm);
-      clearStatusMessage(registerForm);
-      registerForm.reset();
-      setUIState('idle');
-    }, 1500);
+    const formData = { fullName, email, phone, dob, gender, password };
     
+    const response = await submitRegister(formData);
+    
+    if (response.ok) {
+      // Success
+      setUIState('success');
+      displayStatusMessage(
+        registerForm,
+        response.data?.message || 'Account created successfully!',
+        'success'
+      );
+      
+      // Clear form after success
+      setTimeout(() => {
+        clearFormErrors(registerForm);
+        clearStatusMessage(registerForm);
+        registerForm.reset();
+        setUIState('idle');
+        setButtonsDisabled(registerForm, false);
+      }, 1500);
+    } else {
+      // Error response from server
+      const { fieldErrors, generalError } = parseAPIError(response);
+      
+      if (Object.keys(fieldErrors).length > 0) {
+        // Display field errors
+        clearFormErrors(registerForm);
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          displayFieldError(registerForm, field, message);
+        });
+        setUIState('error');
+        displayStatusMessage(registerForm, 'Please check the errors above', 'error');
+      } else if (generalError) {
+        // Display general error
+        setUIState('error');
+        displayStatusMessage(registerForm, generalError, 'error');
+      } else {
+        setUIState('error');
+        displayStatusMessage(registerForm, 'Registration failed. Please try again.', 'error');
+      }
+      
+      setButtonsDisabled(registerForm, false);
+    }
+  } catch (error) {
+    // Network or other error
+    setUIState('error');
+    const errorMessage = error.message === 'Request timeout'
+      ? 'Request timed out. Please check your connection and try again.'
+      : 'Network error. Please check your connection and try again.';
+    displayStatusMessage(registerForm, errorMessage, 'error');
     setButtonsDisabled(registerForm, false);
-  }, 1500);
+  }
 }
 
 /**
