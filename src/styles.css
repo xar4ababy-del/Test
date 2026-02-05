@@ -54,27 +54,33 @@ html,body{height:100%;margin:0;background:var(--bg);color:#111}
 .form-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,0.08)}
 
 .checkbox-row{flex-direction:row;align-items:center;gap:10px}
-.field-error{color:var(--danger);font-size:12px;min-height:16px;margin-top:4px;display:block}
+.field-error{color:var(--danger);font-size:12px;min-height:16px;margin-top:4px;display:block;animation:slideDown 200ms ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .input-error{border-color:var(--danger) !important;box-shadow:0 4px 12px rgba(220,38,38,0.06) !important}
+.input-error:focus{box-shadow:0 4px 12px rgba(220,38,38,0.12) !important}
 
 .form-actions{display:flex;gap:12px;align-items:center;margin-top:8px}
 .btn{padding:10px 14px;border-radius:8px;border:1px solid transparent;background:#fff;cursor:pointer;transition:opacity var(--transition), transform var(--transition)}
 .btn:hover{transform:translateY(-1px)}
-.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-.btn.primary{background:var(--primary);color:#fff}
-.btn.secondary{background:#eef3fb;color:var(--primary)}
-.link-muted{color:var(--muted);font-size:13px;text-decoration:none}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;pointer-events:none}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover:not(:disabled){background:#1d4ed8}
+.btn.secondary{background:#eef3fb;color:var(--primary);border-color:#dbeafe}
+.btn.secondary:hover:not(:disabled){background:#dbeafe}
+.link-muted{color:var(--muted);font-size:13px;text-decoration:none;transition:color var(--transition)}
+.link-muted:hover{color:#111}
 
 /* status messages */
-.status-message{margin-top:12px;min-height:20px;font-size:14px}
+.status-message{margin-top:12px;min-height:20px;font-size:14px;animation:slideDown 200ms ease}
 .status-message.is-error{color:var(--danger)}
-.status-message.is-success{color:var(--success)}
-.status-message.is-loading{color:var(--muted)}
+.status-message.is-success{color:var(--success);display:flex;align-items:center;gap:8px}
+.status-message.is-loading{color:var(--muted);display:flex;align-items:center;gap:8px}
 
 /* small loading indicator */
 .loading-indicator{
   display:inline-block;width:14px;height:14px;border-radius:50%;
-  border:2px solid rgba(0,0,0,0.08);border-top-color:var(--primary);animation:spin 800ms linear infinite;margin-left:8px;vertical-align:middle;
+  border:2px solid rgba(0,0,0,0.08);border-top-color:var(--primary);animation:spin 800ms linear infinite;vertical-align:middle;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -85,7 +91,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:#111}
 }
 
 /* subtle success state for individual inputs */
-.input-success{border-color:var(--success);box-shadow:0 6px 18px rgba(22,163,74,0.06)}
+.input-success{border-color:var(--success) !important;box-shadow:0 6px 18px rgba(22,163,74,0.06) !important}
 /* Footer */
 .site-footer{background:linear-gradient(90deg, #fbfdff, #fff);border-top:1px solid #e6eef8;margin-top:48px;padding:24px 0}
 .site-footer small{color:var(--muted);font-size:13px}
