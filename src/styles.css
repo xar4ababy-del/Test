@@ -86,3 +86,6 @@ html,body{height:100%;margin:0;background:var(--bg);color:#111}
 
 /* subtle success state for individual inputs */
 .input-success{border-color:var(--success);box-shadow:0 6px 18px rgba(22,163,74,0.06)}
+/* Footer */
+.site-footer{background:linear-gradient(90deg, #fbfdff, #fff);border-top:1px solid #e6eef8;margin-top:48px;padding:24px 0}
+.site-footer small{color:var(--muted);font-size:13px}
