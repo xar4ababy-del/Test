@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Static Auth — Test</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <img src="/public/logo.svg" alt="Logo" class="site-logo" />
+      <h1>Test — Static Auth Interface</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="auth-card" id="auth-card" aria-labelledby="auth-title" data-state="idle">
+      <h2 id="auth-title">Авторизация</h2>
+
+      <nav class="tabs" role="tablist" aria-label="Auth tabs">
+        <div class="tab" data-tab="login">Вход</div>
+        <div class="tab" data-tab="register">Регистрация</div>
+      </nav>
+
+      <div class="tab-panels">
+        <article class="panel login-panel" data-panel="login" aria-labelledby="login-title">
+          <h3 id="login-title">Вход</h3>
+          <form id="login-form" class="form" action="#" method="post" novalidate>
+            <label class="form-row">
+              <span>Электронная почта</span>
+              <input type="email" name="email" placeholder="you@example.com" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Пароль</span>
+              <input type="password" name="password" placeholder="••••••••" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row checkbox-row">
+              <input type="checkbox" name="remember" />
+              <span>Запомнить меня</span>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="btn primary" data-purpose="login-submit">Войти</button>
+              <a class="link-muted" href="#" tabindex="-1">Забыли пароль?</a>
+            </div>
+
+            <div class="status-message" aria-live="polite"></div>
+          </form>
+        </article>
+
+        <article class="panel register-panel" data-panel="register" aria-labelledby="register-title" hidden>
+          <h3 id="register-title">Регистрация</h3>
+          <form id="register-form" class="form" action="#" method="post" novalidate>
+            <label class="form-row">
+              <span>ФИО</span>
+              <input type="text" name="fullName" placeholder="Иван Иванов" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Электронная почта</span>
+              <input type="email" name="email" placeholder="you@example.com" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Телефон</span>
+              <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Дата рождения</span>
+              <input type="date" name="dob" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Пол</span>
+              <select name="gender">
+                <option value="">Выберите</option>
+                <option value="female">Женский</option>
+                <option value="male">Мужской</option>
+                <option value="other">Другое</option>
+              </select>
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Пароль</span>
+              <input type="password" name="password" placeholder="••••••••" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row">
+              <span>Подтвердите пароль</span>
+              <input type="password" name="passwordConfirm" placeholder="••••••••" />
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <label class="form-row checkbox-row">
+              <input type="checkbox" name="terms" />
+              <span>Я принимаю условия использования</span>
+              <small class="field-error" aria-live="polite"></small>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="btn primary" data-purpose="register-submit">Зарегистрироваться</button>
+              <button type="button" class="btn secondary" data-purpose="register-cancel">Отмена</button>
+            </div>
+
+            <div class="status-message" aria-live="polite"></div>
+          </form>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© Test — Static Auth Interface</small>
+    </div>
+  </footer>
+
+  <script src="/src/app.js" defer></script>
+</body>
+</html>
